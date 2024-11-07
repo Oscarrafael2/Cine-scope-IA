@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen de Películas y Series</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(to right, #2a5298, #1e3c72);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 80%;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button i {
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .media-info {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .media-info h2 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+        img {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        .rating {
+            color: #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cine Scope IA</h1>
+        <input type="text" id="mediaTitle" placeholder="Ingresa el título de la película o serie">
+        <button onclick="getMedia()"><i class="fas fa-search"></i>Buscar</button>
+        <div class="media-info" id="mediaInfo"></div>
+    </div>
+
+    <script>
+        async function getMedia() {
+            const title = document.getElementById('mediaTitle').value;
+            const apiKey = 'dd1c63ed9443db5941511c9e99b52d17'; // Reemplaza esto con tu API Key de TMDb
+            document.getElementById('mediaInfo').innerHTML = "Cargando...";
+
+            const movieResponse = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${title}&language=es`);
+            const movieData = await movieResponse.json();
+
+            if (movieData.results.length > 0) {
+                const movie = movieData.results[0];
+                const creditsResponse = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}/credits?api_key=${apiKey}`);
+                const creditsData = await creditsResponse.json();
+                const mainCast = creditsData.cast.slice(0, 5).map(cast => cast.name).join(", ");
+                
+                const providersResponse = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}/watch/providers?api_key=${apiKey}`);
+                const providersData = await providersResponse.json();
+                const providers = providersData.results.ES?.flatrate || [];
+                const providersList = providers.map(provider => provider.provider_name).join(", ") || "No disponible en plataformas de streaming actualmente.";
+
+                document.getElementById('mediaInfo').innerHTML = `
+                    <div class="card">
+                        <h2>${movie.title}</h2>
+                        <img src="https://image.tmdb.org/t/p/w500/${movie.poster_path}" alt="${movie.title} Poster">
+                        <p><strong>Tipo:</strong> Película</p>
+                        <p><strong>Año:</strong> ${movie.release_date.split("-")[0]}</p>
+                        <p><strong>Sinopsis:</strong> ${movie.overview}</p>
+                        <p><strong>Puntuación:</strong> <span class="rating">${'⭐'.repeat(Math.round(movie.vote_average / 2))} (${movie.vote_average} / 10)</span></p>
+                        <p><strong>Elenco Principal:</strong> ${mainCast}</p>
+                        <p><strong>Disponible en:</strong> ${providersList}</p>
+                        ${movie.adult ? "<p><strong>Advertencia:</strong> Contenido para adultos.</p>" : ""}
+                    </div>
+                `;
+            } else {
+                document.getElementById('mediaInfo').innerHTML = `<p>Película o serie no encontrada.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
